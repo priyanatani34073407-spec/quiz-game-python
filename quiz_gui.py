@@ -37,8 +37,6 @@ quiz_data = [
 ("Which company developed Python?", ["Google","Microsoft","Python Software Foundation","IBM"], "Python Software Foundation")
 ]
 
-random.shuffle(quiz_data)
-
 # ---------------- VARIABLES ---------------- #
 
 question_index = 0
@@ -48,15 +46,20 @@ time_left = 20
 max_time = 20
 difficulty = "Medium"
 
+# ---------------- HIGH SCORE ---------------- #
+
+def load_high_score():
+    try:
+        with open("scores.txt","r") as f:
+            return int(f.read())
+    except:
+        return 0
+
+def save_high_score(score):
+    with open("scores.txt","w") as f:
+        f.write(str(score))
+
 # ---------------- FUNCTIONS ---------------- #
-
-def hover(btn, color):
-    btn.bind("<Enter>", lambda e: btn.config(bg=color))
-    btn.bind("<Leave>", lambda e: btn.config(bg="#4CAF50"))
-
-def update_difficulty_label():
-    selected = difficulty_var.get()
-    difficulty_status.config(text=f"Selected Level: {selected}")
 
 def set_difficulty():
     global difficulty, max_time
@@ -80,16 +83,19 @@ def start_quiz():
         return
 
     set_difficulty()
-
-    messagebox.showinfo("Welcome", f"Welcome {player_name.get()}!\nGood luck in the quiz.")
+    random.shuffle(quiz_data)
 
     start_frame.pack_forget()
     quiz_frame.pack(fill="both", expand=True)
+
+    name_label.config(text=f"Player: {player_name.get()}")
 
     load_question()
 
 def load_question():
     global time_left
+
+    feedback_label.config(text="")
 
     time_left = max_time
 
@@ -100,7 +106,7 @@ def load_question():
 
     question, options, answer = quiz_data[question_index]
 
-    progress_label.config(text=f"Question {question_index+1}/30")
+    progress_label.config(text=f"Question {question_index+1}/{len(quiz_data)}")
 
     question_label.config(text=question)
 
@@ -113,7 +119,6 @@ def update_timer():
     global time_left, timer_id
 
     timer_label.config(text=f"⏳ {time_left}s")
-
     progress_bar["value"] = time_left
 
     if time_left > 0:
@@ -125,10 +130,14 @@ def update_timer():
 def check_answer():
     global score
 
-    question, options, answer = quiz_data[question_index]
+    if question_index < len(quiz_data):
+        question, options, answer = quiz_data[question_index]
 
-    if selected_option.get() == answer:
-        score += 1
+        if selected_option.get() == answer:
+            score += 1
+            feedback_label.config(text="✅ Correct!", fg="lightgreen")
+        else:
+            feedback_label.config(text=f"❌ Correct Answer: {answer}", fg="red")
 
 def next_question():
     global question_index, timer_id
@@ -138,26 +147,43 @@ def next_question():
 
     check_answer()
 
-    question_index += 1
-
-    if question_index < len(quiz_data):
+    if question_index < len(quiz_data) - 1:
+        question_index += 1
         load_question()
     else:
         finish_quiz()
+
+def restart_quiz():
+    global question_index, score
+
+    question_index = 0
+    score = 0
+
+    random.shuffle(quiz_data)
+
+    quiz_frame.pack_forget()
+    start_frame.pack(pady=70)
 
 def finish_quiz():
 
     percentage = (score/len(quiz_data))*100
 
+    high_score = load_high_score()
+
+    if score > high_score:
+        save_high_score(score)
+        high_text = "🏆 New High Score!"
+    else:
+        high_text = f"High Score: {high_score}"
+
     messagebox.showinfo(
         "Quiz Finished",
         f"Name: {player_name.get()}\n"
         f"Difficulty: {difficulty}\n"
-        f"Score: {score}/30\n"
-        f"Percentage: {round(percentage,2)}%"
+        f"Score: {score}/{len(quiz_data)}\n"
+        f"Percentage: {round(percentage,2)}%\n\n"
+        f"{high_text}"
     )
-
-    window.destroy()
 
 # ---------------- UI ---------------- #
 
@@ -166,130 +192,84 @@ window.title("Python Quiz Game")
 window.geometry("650x550")
 window.config(bg="#1e1e2f")
 
-# -------- START SCREEN -------- #
-
+# START SCREEN
 start_frame = tk.Frame(window,bg="#1e1e2f")
 start_frame.pack(pady=70)
 
-tk.Label(start_frame,
-text="Welcome to the Python Quiz Game!",
-font=("Arial",18,"bold"),
-bg="#1e1e2f",
-fg="#00d4ff").pack(pady=10)
+tk.Label(start_frame,text="Welcome to the Python Quiz Game!",
+font=("Arial",18,"bold"),bg="#1e1e2f",fg="#00d4ff").pack(pady=10)
 
-tk.Label(start_frame,
-text="Enter Your Name",
-font=("Arial",14),
-bg="#1e1e2f",
-fg="white").pack()
+tk.Label(start_frame,text="Enter Your Name",
+font=("Arial",14),bg="#1e1e2f",fg="white").pack()
 
 player_name = tk.Entry(start_frame,font=("Arial",12))
 player_name.pack(pady=10)
 
 difficulty_var = tk.StringVar(value="Medium")
 
-tk.Label(start_frame,
-text="Select Difficulty",
-font=("Arial",14),
-bg="#1e1e2f",
-fg="white").pack(pady=10)
-
 tk.Radiobutton(start_frame,text="Easy",variable=difficulty_var,value="Easy",
-command=update_difficulty_label,bg="#1e1e2f",fg="white").pack()
+bg="#1e1e2f",fg="white").pack()
 
 tk.Radiobutton(start_frame,text="Medium",variable=difficulty_var,value="Medium",
-command=update_difficulty_label,bg="#1e1e2f",fg="white").pack()
+bg="#1e1e2f",fg="white").pack()
 
 tk.Radiobutton(start_frame,text="Hard",variable=difficulty_var,value="Hard",
-command=update_difficulty_label,bg="#1e1e2f",fg="white").pack()
+bg="#1e1e2f",fg="white").pack()
 
-difficulty_status = tk.Label(start_frame,
-text="Selected Level: Medium",
-font=("Arial",11,"bold"),
-bg="#1e1e2f",
-fg="yellow")
-
-difficulty_status.pack(pady=5)
-
-start_btn = tk.Button(start_frame,
-text="Start Quiz",
-font=("Arial",12,"bold"),
-bg="#4CAF50",
-fg="white",
+start_btn = tk.Button(start_frame,text="Start Quiz",
+font=("Arial",12,"bold"),bg="#4CAF50",fg="white",
 command=start_quiz)
 
 start_btn.pack(pady=15)
 
-hover(start_btn,"#2e7d32")
-
-# -------- QUIZ SCREEN -------- #
-
+# QUIZ SCREEN
 quiz_frame = tk.Frame(window,bg="#1e1e2f")
 
-difficulty_badge = tk.Label(quiz_frame,
-text="Level",
-font=("Arial",10,"bold"),
-fg="white")
-
+difficulty_badge = tk.Label(quiz_frame,text="Level",
+font=("Arial",10,"bold"),fg="white")
 difficulty_badge.pack(pady=5)
 
-progress_label = tk.Label(quiz_frame,
-text="Question",
-font=("Arial",12),
-bg="#1e1e2f",
-fg="white")
+name_label = tk.Label(quiz_frame,text="",
+font=("Arial",11),bg="#1e1e2f",fg="white")
+name_label.pack()
 
+progress_label = tk.Label(quiz_frame,text="Question",
+font=("Arial",12),bg="#1e1e2f",fg="white")
 progress_label.pack()
 
 progress_bar = ttk.Progressbar(quiz_frame,length=400)
 progress_bar.pack(pady=10)
 
-timer_label = tk.Label(quiz_frame,
-text="⏳",
-font=("Arial",12,"bold"),
-bg="#1e1e2f",
-fg="orange")
-
+timer_label = tk.Label(quiz_frame,text="⏳",
+font=("Arial",12,"bold"),bg="#1e1e2f",fg="orange")
 timer_label.pack()
 
-question_label = tk.Label(quiz_frame,
-text="",
-wraplength=500,
-font=("Arial",16),
-bg="#2d2d44",
-fg="white",
-padx=20,
-pady=20)
-
+question_label = tk.Label(quiz_frame,text="",wraplength=500,
+font=("Arial",16),bg="#2d2d44",fg="white",
+padx=20,pady=20)
 question_label.pack(pady=20)
 
 selected_option = tk.StringVar()
-
 radio_buttons = []
 
 for i in range(4):
-
-    rb = tk.Radiobutton(quiz_frame,
-    text="",
-    variable=selected_option,
-    font=("Arial",13),
-    bg="#1e1e2f",
-    fg="white",
-    selectcolor="#444")
-
+    rb = tk.Radiobutton(quiz_frame,text="",variable=selected_option,
+    font=("Arial",13),bg="#1e1e2f",fg="white",selectcolor="#444")
     rb.pack(anchor="w", padx=50)
-
     radio_buttons.append(rb)
 
-next_btn = tk.Button(quiz_frame,
-text="Next Question",
-font=("Arial",12,"bold"),
-bg="#4CAF50",
-fg="white",
-command=next_question)
+feedback_label = tk.Label(quiz_frame,text="",
+font=("Arial",12,"bold"),bg="#1e1e2f")
+feedback_label.pack()
 
+next_btn = tk.Button(quiz_frame,text="Next Question",
+font=("Arial",12,"bold"),bg="#4CAF50",fg="white",
+command=next_question)
 next_btn.pack(pady=20)
 
-hover(next_btn,"#2e7d32")
+restart_btn = tk.Button(quiz_frame,text="Restart Quiz",
+font=("Arial",12,"bold"),bg="#2196F3",fg="white",
+command=restart_quiz)
+restart_btn.pack(pady=5)
 
 window.mainloop()
