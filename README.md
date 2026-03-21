@@ -2,8 +2,7 @@
 
 A desktop quiz application built with Python and Tkinter that tests programming knowledge through interactive multiple-choice questions.
 
-A modern **Python GUI Quiz Application** built using Tkinter.  
-This app presents multiple-choice questions with a timer, difficulty levels, and score tracking.
+A modern Python GUI Quiz Application built using Tkinter with timer, difficulty levels, score tracking, and high score system.
 
 It is designed as a **beginner-to-intermediate Python project** to demonstrate GUI development, logic building, and user interaction.
 
@@ -18,8 +17,12 @@ It is designed as a **beginner-to-intermediate Python project** to demonstrate G
 ✔ Progress Bar Timer  
 ✔ Random Question Order  
 ✔ Score Calculation with Percentage  
+✔ Correct / Wrong answer feedback  
+✔ Restart Quiz option  
+✔ High Score tracking system  
 ✔ Clean and modern UI  
 ✔ Beginner-friendly project structure  
+
 
 ---
 
