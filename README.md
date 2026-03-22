@@ -57,7 +57,7 @@ quiz-game-python
 ## ⚙ Installation
 
 ### 1️⃣ Clone the repository
-git clone https://github.com/your-username/python-quiz-game.git
+git clone https://github.com/priyanatani34073407-spec/quiz-game-python
 
 ### 2️⃣ Navigate to project folder
 cd python-quiz-game
